@@ -79,6 +79,10 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
+	if m.Author.Bot {
+		return
+	}
+
 	if len(content) <= len(discordBot.Prefix) {
 		return
 	}
