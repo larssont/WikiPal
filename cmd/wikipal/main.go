@@ -87,6 +87,10 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
+	if content[:2] != discordBot.Prefix {
+		return
+	}
+
 	content = content[len(discordBot.Prefix)+1:]
 
 	message := strings.SplitN(content, " ", 2)
