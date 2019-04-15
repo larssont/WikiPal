@@ -37,17 +37,18 @@ func help() string {
 
 	wHelp := "`!w help` Prints this information :information_source:"
 	wSearch := "`!w search [title]` Searches wikipedia for a given title :mag:"
+	myPrefix := "You can talk with me by using the prefix `!w`"
 
 	response := fmt.Sprintf(`
 		Hi my name is %s :robot:
 		I can help you search Wikipedia.
 
-		You can talk with me by using the prefix !w
+		%s
 		These are my commands:
 
 		%s
 		%s
 
-		Have fun!`, discordBot.Name, wHelp, wSearch)
+		Have fun!`, discordBot.Name, myPrefix, wHelp, wSearch)
 	return response
 }
