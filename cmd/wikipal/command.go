@@ -9,8 +9,8 @@ func processCommand(query string, queryParam string) interface{} {
 	var response interface{}
 
 	switch query {
-	case "find":
-		response = find(queryParam)
+	case "search":
+		response = search(queryParam)
 	case "help":
 		response = help()
 	default:
@@ -19,7 +19,7 @@ func processCommand(query string, queryParam string) interface{} {
 	return response
 }
 
-func find(queryParam string) interface{} {
+func search(queryParam string) interface{} {
 	if queryParam == "" {
 		return "Find what?"
 	}
@@ -34,14 +34,20 @@ func find(queryParam string) interface{} {
 }
 
 func help() string {
-	response := fmt.Sprintf(`
-		Hi my name is %s.
-		I can help you find pictures on wikipedia.
-		
-		E.g. 
-		You can find an image of Bruce Lee by typing "!w find bruce lee"
 
-		Remember that you always need to use the prefix "!w" when you chat with me.
-		Have fun!`, discordBot.Name)
+	wHelp := "`!w help` Prints this information :information_source:"
+	wSearch := "`!w search [title]` Searches wikipedia for a given title :mag:"
+
+	response := fmt.Sprintf(`
+		Hi my name is %s :robot:
+		I can help you search Wikipedia.
+
+		You can talk with me by using the prefix !w
+		These are my commands:
+
+		%s
+		%s
+
+		Have fun!`, discordBot.Name, wHelp, wSearch)
 	return response
 }
