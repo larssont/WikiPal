@@ -105,7 +105,11 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if str, ok := response.(string); ok {
 		s.ChannelMessageSend(m.ChannelID, str)
-	} else if img, ok := response.(ImageFile); ok {
-		s.ChannelFileSend(m.ChannelID, img.Name, img.File)
+	} else if wikiPage, ok := response.(WikiPage); ok {
+
+		s.ChannelFileSend(m.ChannelID, wikiPage.ThumbnailFileName, wikiPage.ThumbnailFile)
+		s.ChannelMessageSend(m.ChannelID, wikiPage.Snippet)
+
+		defer wikiPage.ThumbnailFile.Close()
 	}
 }

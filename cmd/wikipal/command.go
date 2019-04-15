@@ -2,15 +2,7 @@ package main
 
 import (
 	"fmt"
-	"io"
-	"os"
 )
-
-// ImageFile struct
-type ImageFile struct {
-	Name string
-	File io.Reader
-}
 
 func processCommand(query string, queryParam string) interface{} {
 
@@ -32,19 +24,13 @@ func find(queryParam string) interface{} {
 		return "Find what?"
 	}
 
-	imgFound, imgURL := findImage(queryParam)
+	wikiPage := SearchWiki(queryParam)
 
-	if !imgFound {
-		return "I'm sorry, I couldn't find anything for " + queryParam + "."
+	if wikiPage.ThumbnailFile != nil || wikiPage.Snippet != "" {
+		return wikiPage
 	}
 
-	fileName := downloadImage(imgURL)
-	file, _ := os.Open(fileName)
-
-	img := ImageFile{fileName, file}
-
-	os.Remove(fileName)
-	return img
+	return fmt.Sprintf(`Ehh, I couldn't find anything for "%s"`, queryParam)
 }
 
 func help() string {

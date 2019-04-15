@@ -7,11 +7,50 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
+	"strconv"
+	"time"
 )
 
-// Page Struct for JSON
-type Page struct {
+//WikiPage struct
+type WikiPage struct {
+	ThumbnailFile     *os.File
+	ThumbnailFileName string
+	Snippet           string
+}
+
+// WikiPageSearch Struct for JSON
+type WikiPageSearch struct {
+	Batchcomplete string `json:"batchcomplete"`
+	Continue      struct {
+		Sroffset int    `json:"sroffset"`
+		Continue string `json:"continue"`
+	} `json:"continue"`
+	Query struct {
+		Searchinfo struct {
+			Totalhits int `json:"totalhits"`
+		} `json:"searchinfo"`
+		Search []struct {
+			Ns        int       `json:"ns"`
+			Title     string    `json:"title"`
+			Pageid    int       `json:"pageid"`
+			Size      int       `json:"size"`
+			Wordcount int       `json:"wordcount"`
+			Snippet   string    `json:"snippet"`
+			Timestamp time.Time `json:"timestamp"`
+		} `json:"search"`
+	} `json:"query"`
+}
+
+//WikiPageImages struct
+type WikiPageImages struct {
+	Batchcomplete string `json:"batchcomplete"`
+	Query         struct {
+		Pages map[string]ImagePage `json:"pages"`
+	} `json:"query"`
+}
+
+//ImagePage struct
+type ImagePage struct {
 	Pageid    int    `json:"pageid"`
 	Ns        int    `json:"ns"`
 	Title     string `json:"title"`
@@ -23,35 +62,82 @@ type Page struct {
 	Pageimage string `json:"pageimage"`
 }
 
-//Response Struct for JSON
-type Response struct {
+//WikiPageExtract struct
+type WikiPageExtract struct {
 	Batchcomplete string `json:"batchcomplete"`
 	Query         struct {
-		Pages map[string]Page `json:"pages"`
+		Pages map[string]ExtractPage `json:"pages"`
 	} `json:"query"`
 }
 
-func getImageJSON(search string) string {
-	search = strings.Title(search)
+//ExtractPage struct
+type ExtractPage struct {
+	Pageid  int    `json:"pageid"`
+	Ns      int    `json:"ns"`
+	Title   string `json:"title"`
+	Extract string `json:"extract"`
+}
 
+func getWiki() *http.Request {
 	req, err := http.NewRequest("GET", "http://en.wikipedia.org/w/api.php", nil)
 	if err != nil {
 		log.Print(err)
 		os.Exit(1)
 	}
 
+	return req
+}
+
+func queryPageThumbnail(id int) string {
+
+	req := getWiki()
 	q := req.URL.Query()
+
 	q.Add("action", "query")
 	q.Add("prop", "pageimages")
 	q.Add("pithumbsize", "500")
-	q.Add("titles", search)
+	q.Add("pilicense", "any")
+	q.Add("pageids", strconv.Itoa(id))
 	q.Add("format", "json")
 
 	req.URL.RawQuery = q.Encode()
 	return req.URL.String()
 }
 
-func convertImageJSON(url string) Response {
+func queryPageSearch(search string) string {
+
+	req := getWiki()
+	q := req.URL.Query()
+
+	q.Add("action", "query")
+	q.Add("list", "search")
+	q.Add("srsearch", search)
+	q.Add("srlimit", "3")
+	q.Add("utf8", "")
+	q.Add("format", "json")
+
+	req.URL.RawQuery = q.Encode()
+	return req.URL.String()
+}
+
+func queryPageExtract(id int) string {
+	req := getWiki()
+	q := req.URL.Query()
+
+	q.Add("action", "query")
+	q.Add("prop", "extracts")
+	q.Add("exintro", "true")
+	q.Add("exchars", "350")
+	q.Add("pageids", strconv.Itoa(id))
+	q.Add("explaintext", "true")
+	q.Add("format", "json")
+
+	req.URL.RawQuery = q.Encode()
+	return req.URL.String()
+}
+
+func getJSONData(url string) []byte {
+
 	resp, err := http.Get(url)
 	if err != nil {
 		panic(err)
@@ -68,39 +154,44 @@ func convertImageJSON(url string) Response {
 		panic(err)
 	}
 
-	var res = Response{}
-
-	err = json.Unmarshal([]byte(jsonDataFromHTTP), &res) // here!
-
-	if err != nil {
-		panic(err)
-	}
-
-	return res
+	return jsonDataFromHTTP
 
 }
 
-func findImage(searchParameter string) (bool, string) {
-	jsonURL := getImageJSON(searchParameter)
-	res := convertImageJSON(jsonURL)
+func convertToWikiPageSearch(url string) WikiPageSearch {
 
-	var pages []Page
+	jsonData := getJSONData(url)
 
-	for _, v := range res.Query.Pages {
-		pages = append(pages, v)
-	}
+	var search = WikiPageSearch{}
 
-	source := pages[0].Thumbnail.Source
-	found := false
+	json.Unmarshal([]byte(jsonData), &search)
+	return search
 
-	if source != "" {
-		found = true
-	}
-
-	return found, source
 }
 
-func downloadImage(URL string) string {
+func convertToWikiPageExtract(url string) WikiPageExtract {
+
+	jsonData := getJSONData(url)
+
+	var pageExtract = WikiPageExtract{}
+
+	json.Unmarshal([]byte(jsonData), &pageExtract)
+
+	return pageExtract
+}
+
+func convertToWikiPageImages(url string) WikiPageImages {
+
+	jsonData := getJSONData(url)
+
+	var pageImages = WikiPageImages{}
+
+	json.Unmarshal([]byte(jsonData), &pageImages)
+
+	return pageImages
+}
+
+func downloadImage(URL string) (*os.File, string) {
 
 	res, err := http.Get(URL)
 	if err != nil {
@@ -108,17 +199,58 @@ func downloadImage(URL string) string {
 	}
 	defer res.Body.Close()
 
-	fileName := "../../tmp/pic.jpg"
+	fileName := "pic.jpg"
+	filePath := "../../" + fileName
 
-	file, err := os.Create(fileName)
+	out, err := os.Create(filePath)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer file.Close()
+	defer out.Close()
 
-	_, err = io.Copy(file, res.Body)
+	_, err = io.Copy(out, res.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return fileName
+
+	file, err := os.Open(filePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return file, fileName
+
+}
+
+/*
+* SearchWiki earches wikipedia for a given searchterm and returns
+* the image for given page and a short snippet of text.
+*
+ */
+func SearchWiki(input string) WikiPage {
+
+	pageSearchURL := queryPageSearch(input)
+	pageSearch := convertToWikiPageSearch(pageSearchURL)
+
+	if len(pageSearch.Query.Search) < 1 {
+		return WikiPage{nil, "", ""}
+	}
+
+	pageid := pageSearch.Query.Search[0].Pageid
+
+	pageExtractURL := queryPageExtract(pageid)
+	pageExtract := convertToWikiPageExtract(pageExtractURL)
+
+	extract := pageExtract.Query.Pages[strconv.Itoa(pageid)].Extract
+
+	pageThumbnailURL := queryPageThumbnail(pageid)
+	pageThumbnail := convertToWikiPageImages(pageThumbnailURL)
+
+	if pageThumbnail.Query.Pages[strconv.Itoa(pageid)].Thumbnail.Source == "" {
+		return WikiPage{nil, "", extract}
+	}
+
+	file, fileName := downloadImage(pageThumbnail.Query.Pages[strconv.Itoa(pageid)].Thumbnail.Source)
+
+	return WikiPage{file, fileName, extract}
 }
