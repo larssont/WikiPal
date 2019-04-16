@@ -22,7 +22,10 @@ type Bot struct {
 }
 
 func getBotConf() {
-	jsonFile, err := os.Open("../../configs/bot.json")
+
+	path := "../../configs/bot.json"
+
+	jsonFile, err := os.Open(path)
 
 	if err != nil {
 		fmt.Println(err)
@@ -107,9 +110,12 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		s.ChannelMessageSend(m.ChannelID, str)
 	} else if wikiPage, ok := response.(WikiPage); ok {
 
-		s.ChannelFileSend(m.ChannelID, wikiPage.ThumbnailFileName, wikiPage.ThumbnailFile)
-		s.ChannelMessageSend(m.ChannelID, wikiPage.Snippet)
+		s.ChannelFileSend(m.ChannelID, wikiPage.Image.ThumbnailFileName, wikiPage.Image.ThumbnailFile)
 
-		defer wikiPage.ThumbnailFile.Close()
+		text := fmt.Sprintf(" ᠌᠌᠌᠌᠌᠌᠌᠌\n__**%s**__\n%s\n<%s>", wikiPage.Title, wikiPage.Snippet, wikiPage.URL)
+
+		s.ChannelMessageSend(m.ChannelID, text)
+
+		defer wikiPage.Image.ThumbnailFile.Close()
 	}
 }

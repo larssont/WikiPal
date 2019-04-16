@@ -26,7 +26,7 @@ func search(queryParam string) interface{} {
 
 	wikiPage := SearchWiki(queryParam)
 
-	if wikiPage.ThumbnailFile != nil || wikiPage.Snippet != "" {
+	if wikiPage.Image.ThumbnailFile != nil || wikiPage.Snippet != "" {
 		return wikiPage
 	}
 

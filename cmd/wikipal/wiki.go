@@ -2,41 +2,36 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
-	"time"
 )
 
 //WikiPage struct
 type WikiPage struct {
+	Title   string
+	URL     string
+	Image   Thumbnail
+	Snippet string
+}
+
+//Thumbnail struct
+type Thumbnail struct {
 	ThumbnailFile     *os.File
 	ThumbnailFileName string
-	Snippet           string
 }
 
 // WikiPageSearch Struct for JSON
 type WikiPageSearch struct {
-	Batchcomplete string `json:"batchcomplete"`
-	Continue      struct {
-		Sroffset int    `json:"sroffset"`
-		Continue string `json:"continue"`
-	} `json:"continue"`
 	Query struct {
-		Searchinfo struct {
-			Totalhits int `json:"totalhits"`
-		} `json:"searchinfo"`
 		Search []struct {
-			Ns        int       `json:"ns"`
-			Title     string    `json:"title"`
-			Pageid    int       `json:"pageid"`
-			Size      int       `json:"size"`
-			Wordcount int       `json:"wordcount"`
-			Snippet   string    `json:"snippet"`
-			Timestamp time.Time `json:"timestamp"`
+			Title  string `json:"title"`
+			Pageid int    `json:"pageid"`
 		} `json:"search"`
 	} `json:"query"`
 }
@@ -52,20 +47,15 @@ type WikiPageImages struct {
 //ImagePage struct
 type ImagePage struct {
 	Pageid    int    `json:"pageid"`
-	Ns        int    `json:"ns"`
 	Title     string `json:"title"`
 	Thumbnail struct {
 		Source string `json:"source"`
-		Width  int    `json:"width"`
-		Height int    `json:"height"`
 	} `json:"thumbnail"`
-	Pageimage string `json:"pageimage"`
 }
 
 //WikiPageExtract struct
 type WikiPageExtract struct {
-	Batchcomplete string `json:"batchcomplete"`
-	Query         struct {
+	Query struct {
 		Pages map[string]ExtractPage `json:"pages"`
 	} `json:"query"`
 }
@@ -73,8 +63,8 @@ type WikiPageExtract struct {
 //ExtractPage struct
 type ExtractPage struct {
 	Pageid  int    `json:"pageid"`
-	Ns      int    `json:"ns"`
 	Title   string `json:"title"`
+	Fullurl string `json:"fullurl"`
 	Extract string `json:"extract"`
 }
 
@@ -111,8 +101,10 @@ func queryPageSearch(search string) string {
 
 	q.Add("action", "query")
 	q.Add("list", "search")
+	q.Add("prop", "info")
 	q.Add("srsearch", search)
 	q.Add("srlimit", "3")
+	q.Add("srprop", "")
 	q.Add("utf8", "")
 	q.Add("format", "json")
 
@@ -125,7 +117,8 @@ func queryPageExtract(id int) string {
 	q := req.URL.Query()
 
 	q.Add("action", "query")
-	q.Add("prop", "extracts")
+	q.Add("prop", "info|extracts")
+	q.Add("inprop", "url")
 	q.Add("exintro", "true")
 	q.Add("exchars", "350")
 	q.Add("pageids", strconv.Itoa(id))
@@ -200,9 +193,9 @@ func downloadImage(URL string) (*os.File, string) {
 	defer res.Body.Close()
 
 	fileName := "pic.jpg"
-	filePath := "../../" + fileName
+	absPath, _ := filepath.Abs("../../tmp/" + fileName)
 
-	out, err := os.Create(filePath)
+	out, err := os.Create(absPath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -213,7 +206,7 @@ func downloadImage(URL string) (*os.File, string) {
 		log.Fatal(err)
 	}
 
-	file, err := os.Open(filePath)
+	file, err := os.Open(absPath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -227,30 +220,49 @@ func downloadImage(URL string) (*os.File, string) {
 * the image for given page and a short snippet of text.
 *
  */
+
+func test() {
+	fmt.Println("test func")
+}
+
+//Searches wiki
 func SearchWiki(input string) WikiPage {
+
+	chExtract := make(chan string)
+	chURL := make(chan string)
+	chThumbnail := make(chan Thumbnail)
 
 	pageSearchURL := queryPageSearch(input)
 	pageSearch := convertToWikiPageSearch(pageSearchURL)
 
-	if len(pageSearch.Query.Search) < 1 {
-		return WikiPage{nil, "", ""}
-	}
-
 	pageid := pageSearch.Query.Search[0].Pageid
+	title := pageSearch.Query.Search[0].Title
 
-	pageExtractURL := queryPageExtract(pageid)
-	pageExtract := convertToWikiPageExtract(pageExtractURL)
-
-	extract := pageExtract.Query.Pages[strconv.Itoa(pageid)].Extract
-
-	pageThumbnailURL := queryPageThumbnail(pageid)
-	pageThumbnail := convertToWikiPageImages(pageThumbnailURL)
-
-	if pageThumbnail.Query.Pages[strconv.Itoa(pageid)].Thumbnail.Source == "" {
-		return WikiPage{nil, "", extract}
+	if len(pageSearch.Query.Search) < 1 {
+		return WikiPage{"", "", Thumbnail{nil, ""}, ""}
 	}
 
-	file, fileName := downloadImage(pageThumbnail.Query.Pages[strconv.Itoa(pageid)].Thumbnail.Source)
+	go func() {
+		pageExtractURL := queryPageExtract(pageid)
+		pageExtract := convertToWikiPageExtract(pageExtractURL)
 
-	return WikiPage{file, fileName, extract}
+		chExtract <- pageExtract.Query.Pages[strconv.Itoa(pageid)].Extract
+		chURL <- pageExtract.Query.Pages[strconv.Itoa(pageid)].Fullurl
+
+	}()
+	go func() {
+		pageThumbnailURL := queryPageThumbnail(pageid)
+		pageThumbnail := convertToWikiPageImages(pageThumbnailURL)
+
+		if pageThumbnail.Query.Pages[strconv.Itoa(pageid)].Thumbnail.Source != "" {
+			file, fileName := downloadImage(pageThumbnail.Query.Pages[strconv.Itoa(pageid)].Thumbnail.Source)
+			chThumbnail <- Thumbnail{file, fileName}
+		}
+	}()
+
+	extract := <-chExtract
+	URL := <-chURL
+	image := <-chThumbnail
+
+	return WikiPage{title, URL, image, extract}
 }
