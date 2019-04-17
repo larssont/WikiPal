@@ -108,14 +108,17 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if str, ok := response.(string); ok {
 		s.ChannelMessageSend(m.ChannelID, str)
-	} else if wikiPage, ok := response.(WikiPage); ok {
+	} else if wikiSearch, ok := response.(WikiResponse); ok {
 
-		s.ChannelFileSend(m.ChannelID, wikiPage.Image.ThumbnailFileName, wikiPage.Image.ThumbnailFile)
+		var alternativeHits string
+		for i := range wikiSearch.AlternativeHits {
+			alternativeHits += fmt.Sprintf("<%s>\n", wikiSearch.AlternativeHits[i])
+		}
 
-		text := fmt.Sprintf(" ᠌᠌᠌᠌᠌᠌᠌᠌\n__**%s**__\n%s\n<%s>", wikiPage.Title, wikiPage.Snippet, wikiPage.URL)
+		link := fmt.Sprintf("%s", wikiSearch.URL)
+		text := fmt.Sprintf(" ᠌᠌᠌᠌᠌᠌᠌᠌\n**Alternative pages:**\n%s", alternativeHits)
 
+		s.ChannelMessageSend(m.ChannelID, link)
 		s.ChannelMessageSend(m.ChannelID, text)
-
-		defer wikiPage.Image.ThumbnailFile.Close()
 	}
 }

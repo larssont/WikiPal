@@ -24,10 +24,10 @@ func search(queryParam string) interface{} {
 		return "Find what?"
 	}
 
-	wikiPage := SearchWiki(queryParam)
+	wikiSearch := searchWiki(queryParam)
 
-	if wikiPage.Image.ThumbnailFile != nil || wikiPage.Snippet != "" {
-		return wikiPage
+	if wikiSearch.URL != "" {
+		return wikiSearch
 	}
 
 	return fmt.Sprintf(`Ehh, I couldn't find anything for "%s"`, queryParam)
