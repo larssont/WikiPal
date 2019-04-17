@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -127,7 +126,6 @@ func searchWiki(search string) (response WikiResponse) {
 	response.URL = getFinalURL(baseURL.String())
 	response.Totalhits = q.Query.Searchinfo.Totalhits
 
-	fmt.Println(len(q.Query.Search))
 	for i := 1; i < len(q.Query.Search); i++ {
 		baseURL.Path = wikiPath + q.Query.Search[i].Title
 		response.AlternativeHits = append(response.AlternativeHits, getFinalURL(baseURL.String()))
