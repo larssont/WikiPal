@@ -90,7 +90,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	if content[:2] != discordBot.Prefix {
+	if content[:len(discordBot.Prefix)] != discordBot.Prefix {
 		return
 	}
 
