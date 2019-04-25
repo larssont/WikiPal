@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 )
 
 func processCommand(query string, queryParam string) interface{} {
@@ -20,11 +21,24 @@ func processCommand(query string, queryParam string) interface{} {
 }
 
 func search(queryParam string) interface{} {
-	if queryParam == "" {
-		return "Find what?"
+
+	s := strings.Split(queryParam, " ")
+
+	var langCode string
+	lastWord := s[len(s)-1]
+
+	if string(lastWord[0]) == "-" {
+		if len(lastWord) > 1 {
+			langCode = lastWord[1:]
+			queryParam = queryParam[:len(queryParam)-len(langCode)-1]
+		}
 	}
 
-	wikiSearch := searchWiki(queryParam)
+	if queryParam == "" {
+		return "Search for what?"
+	}
+
+	wikiSearch := searchWiki(queryParam, langCode)
 
 	if wikiSearch.URL != "" {
 		return wikiSearch

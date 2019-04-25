@@ -2,12 +2,36 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
 )
+
+var defaultLangCode = "en"
+
+var langCodes = []string{
+	"en",
+	"sv",
+	"de",
+	"fr",
+	"es",
+	"ru",
+	"ja",
+	"nl",
+	"it",
+	"pl",
+	"vi",
+	"pt",
+	"ar",
+	"zh",
+	"uk",
+	"ca",
+	"no",
+	"fi",
+}
 
 //WikiResponse struct
 type WikiResponse struct {
@@ -36,8 +60,8 @@ type WikiQuery struct {
 	} `json:"query"`
 }
 
-func getWiki() *http.Request {
-	req, err := http.NewRequest("GET", "http://en.wikipedia.org/w/api.php", nil)
+func getWiki(langCode string) *http.Request {
+	req, err := http.NewRequest("GET", fmt.Sprintf("http://%s.wikipedia.org/w/api.php", langCode), nil)
 	if err != nil {
 		log.Print(err)
 		os.Exit(1)
@@ -46,8 +70,8 @@ func getWiki() *http.Request {
 	return req
 }
 
-func queryPage(search string) string {
-	req := getWiki()
+func queryPage(search string, langCode string) string {
+	req := getWiki(langCode)
 	q := req.URL.Query()
 
 	q.Add("action", "query")
@@ -85,9 +109,9 @@ func getJSONData(url string) (jsonDataFromHTTP []byte) {
 
 }
 
-func convertToWikiQuery(search string) (query WikiQuery) {
+func convertToWikiQuery(search string, langCode string) (query WikiQuery) {
 
-	url := queryPage(search)
+	url := queryPage(search, langCode)
 	jsonData := getJSONData(url)
 
 	json.Unmarshal([]byte(jsonData), &query)
@@ -95,9 +119,18 @@ func convertToWikiQuery(search string) (query WikiQuery) {
 	return
 }
 
-func parseWikipediaURL() (baseURL *url.URL, path string) {
+func containsString(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
+}
 
-	baseURL, err := url.Parse("https://en.wikipedia.org/wiki/")
+func parseWikipediaURL(langCode string) (baseURL *url.URL, path string) {
+
+	baseURL, err := url.Parse(fmt.Sprintf("https://%s.wikipedia.org/wiki/", langCode))
 	path = baseURL.Path
 	if err != nil {
 		panic(err)
@@ -115,11 +148,15 @@ func getFinalURL(url string) string {
 	return resp.Request.URL.String()
 }
 
-func searchWiki(search string) (response WikiResponse) {
+func searchWiki(search string, langCode string) (response WikiResponse) {
 
-	q := convertToWikiQuery(search)
+	if !containsString(langCode, langCodes) {
+		langCode = defaultLangCode
+	}
 
-	baseURL, wikiPath := parseWikipediaURL()
+	q := convertToWikiQuery(search, langCode)
+
+	baseURL, wikiPath := parseWikipediaURL(langCode)
 
 	baseURL.Path = wikiPath + q.Query.Search[0].Title
 
