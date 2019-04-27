@@ -1,4 +1,4 @@
-package main
+package wiki
 
 import (
 	"encoding/json"
@@ -34,14 +34,14 @@ var langCodes = []string{
 }
 
 //WikiResponse struct
-type WikiResponse struct {
+type Response struct {
 	URL             string
 	Totalhits       int
 	AlternativeHits []string
 }
 
 //WikiQuery struct
-type WikiQuery struct {
+type query struct {
 	Batchcomplete string `json:"batchcomplete"`
 	Continue      struct {
 		Sroffset int    `json:"sroffset"`
@@ -109,12 +109,12 @@ func getJSONData(url string) (jsonDataFromHTTP []byte) {
 
 }
 
-func convertToWikiQuery(search string, langCode string) (query WikiQuery) {
+func convertToWikiQuery(search string, langCode string) (q query) {
 
 	url := queryPage(search, langCode)
 	jsonData := getJSONData(url)
 
-	json.Unmarshal([]byte(jsonData), &query)
+	json.Unmarshal([]byte(jsonData), &q)
 
 	return
 }
@@ -148,7 +148,8 @@ func getFinalURL(url string) string {
 	return resp.Request.URL.String()
 }
 
-func searchWiki(search string, langCode string) (response WikiResponse) {
+//Search searches wikipedia for a given string
+func Search(search string, langCode string) (res Response) {
 
 	if !containsString(langCode, langCodes) {
 		langCode = defaultLangCode
@@ -160,12 +161,12 @@ func searchWiki(search string, langCode string) (response WikiResponse) {
 
 	baseURL.Path = wikiPath + q.Query.Search[0].Title
 
-	response.URL = getFinalURL(baseURL.String())
-	response.Totalhits = q.Query.Searchinfo.Totalhits
+	res.URL = getFinalURL(baseURL.String())
+	res.Totalhits = q.Query.Searchinfo.Totalhits
 
 	for i := 1; i < len(q.Query.Search); i++ {
 		baseURL.Path = wikiPath + q.Query.Search[i].Title
-		response.AlternativeHits = append(response.AlternativeHits, getFinalURL(baseURL.String()))
+		res.AlternativeHits = append(res.AlternativeHits, getFinalURL(baseURL.String()))
 	}
 
 	return

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"WikiPal/internal/parser"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -23,7 +24,7 @@ type Bot struct {
 
 func getBotConf() {
 
-	path := "../../configs/bot.json"
+	path := "configs/bot.json"
 
 	jsonFile, err := os.Open(path)
 
@@ -36,11 +37,13 @@ func getBotConf() {
 	byteValue, _ := ioutil.ReadAll(jsonFile)
 
 	json.Unmarshal(byteValue, &discordBot)
+
 }
 
 func main() {
 
 	getBotConf()
+	parser.GenerateCommands()
 
 	// Create a new Discord session using the provided bot token.
 	dg, err := discordgo.New("Bot " + discordBot.Token)
@@ -104,21 +107,9 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		queryParam = message[1]
 	}
 
-	response := processCommand(query, queryParam)
+	response := parser.ProcessCommand(query, queryParam)
 
-	if str, ok := response.(string); ok {
-		s.ChannelMessageSend(m.ChannelID, str)
-	} else if wikiSearch, ok := response.(WikiResponse); ok {
-
-		var alternativeHits string
-		for i := range wikiSearch.AlternativeHits {
-			alternativeHits += fmt.Sprintf("<%s>\n", wikiSearch.AlternativeHits[i])
-		}
-
-		link := fmt.Sprintf("%s", wikiSearch.URL)
-		text := fmt.Sprintf(" ᠌᠌᠌᠌᠌᠌᠌᠌\n**Alternative pages:**\n%s", alternativeHits)
-
-		s.ChannelMessageSend(m.ChannelID, link)
-		s.ChannelMessageSend(m.ChannelID, text)
+	for _, r := range response {
+		s.ChannelMessageSend(m.ChannelID, r)
 	}
 }
