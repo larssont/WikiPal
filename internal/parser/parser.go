@@ -118,7 +118,7 @@ func setlang() interface{} {
 	}
 	for k, v := range wiki.Languages {
 		if k == input || v == input {
-			wiki.DefaultLanguage = wiki.Languages[k]
+			wiki.DefaultLanguage = k
 			return fmt.Sprintf("Default language changed to %s.", v)
 		}
 	}
