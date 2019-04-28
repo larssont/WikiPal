@@ -132,7 +132,7 @@ func GenerateCommands() {
 		commands = append(commands, command{a, b, c, d, fn})
 	}
 
-	cmd("search", "Search wikipedia for a given query. Use language codes to specify which site you want to use (such as -de for germany)", "query", "langcode", search)
+	cmd("search", "Search wikipedia for a given query. Use language or language code to specify which site you want to use (such as -de for germany)", "query", "language", search)
 	cmd("help", "Shows you this :)", "", "", help)
 	cmd("langs", "Lists all available languages to search with.", "", "", langs)
 	cmd("setlang", "Set the default language for wiki searches.", "language", "", setlang)
