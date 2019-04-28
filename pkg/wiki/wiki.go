@@ -10,30 +10,32 @@ import (
 	"os"
 )
 
-var defaultLangCode = "en"
+//DefaultLanguage for searching
+var DefaultLanguage = "en"
 
-var langCodes = []string{
-	"en",
-	"sv",
-	"de",
-	"fr",
-	"es",
-	"ru",
-	"ja",
-	"nl",
-	"it",
-	"pl",
-	"vi",
-	"pt",
-	"ar",
-	"zh",
-	"uk",
-	"ca",
-	"no",
-	"fi",
+//Languages all language codes available to use
+var Languages = map[string]string{
+	"en": "english",
+	"sv": "swedish",
+	"de": "german",
+	"fr": "french",
+	"es": "spanish",
+	"ru": "russian",
+	"ja": "japanese",
+	"nl": "dutch",
+	"it": "italian",
+	"pl": "polish",
+	"vi": "vietnamese",
+	"pt": "portuguese",
+	"ar": "arabic",
+	"zh": "chinese",
+	"uk": "ukrainian",
+	"ca": "catalan",
+	"no": "norwegian",
+	"fi": "finnish",
 }
 
-//WikiResponse struct
+//Response struct
 type Response struct {
 	URL             string
 	Totalhits       int
@@ -119,13 +121,13 @@ func convertToWikiQuery(search string, langCode string) (q query) {
 	return
 }
 
-func containsString(a string, list []string) bool {
-	for _, b := range list {
-		if b == a {
-			return true
+func getLanguage(a string) string {
+	for k, v := range Languages {
+		if a == k || a == v {
+			return k
 		}
 	}
-	return false
+	return DefaultLanguage
 }
 
 func parseWikipediaURL(langCode string) (baseURL *url.URL, path string) {
@@ -151,9 +153,7 @@ func getFinalURL(url string) string {
 //Search searches wikipedia for a given string
 func Search(search string, langCode string) (res Response) {
 
-	if !containsString(langCode, langCodes) {
-		langCode = defaultLangCode
-	}
+	langCode = getLanguage(langCode)
 
 	q := convertToWikiQuery(search, langCode)
 

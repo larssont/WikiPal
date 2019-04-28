@@ -1,6 +1,7 @@
 package main
 
 import (
+	"WikiPal/internal/embed"
 	"WikiPal/internal/parser"
 	"encoding/json"
 	"fmt"
@@ -108,8 +109,38 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	response := parser.ProcessCommand(query, queryParam)
+	switch response := response.(type) {
+	case []string:
+		sendText(m, s, response)
+	case string:
+		s.ChannelMessageSend(m.ChannelID, response)
+	case embed.Message:
+		sendEmbed(m, s, response)
+	}
 
-	for _, r := range response {
-		s.ChannelMessageSend(m.ChannelID, r)
+}
+
+func sendEmbed(m *discordgo.MessageCreate, s *discordgo.Session, response embed.Message) {
+	e := &discordgo.MessageEmbed{
+		Author:      &discordgo.MessageEmbedAuthor{},
+		Color:       response.Color, // Green
+		Description: response.Description,
+		Title:       response.Title,
+	}
+
+	for k, v := range response.Fields {
+		e.Fields = append(e.Fields, &discordgo.MessageEmbedField{
+			Name:   k,
+			Value:  v,
+			Inline: false,
+		})
+	}
+
+	s.ChannelMessageSendEmbed(m.ChannelID, e)
+}
+
+func sendText(m *discordgo.MessageCreate, s *discordgo.Session, text []string) {
+	for _, message := range text {
+		s.ChannelMessageSend(m.ChannelID, message)
 	}
 }
