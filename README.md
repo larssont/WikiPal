@@ -7,11 +7,13 @@ In order to run this bot on your own machine, you need to install Go.
 
 Follow the instructions here for your system: [golang.org/doc/install](https://golang.org/doc/install)
 
-### Installing
+### Installing/Running
 
-`go get github.com/larssont/WikiPal`
+Download or clone this repo.
 
-`go install github.com/larssont/WikiPal`
+Edit bot.json in directory configs. Make sure to set your own bot token.
+
+Run main.go in directory cmd/wikipal.
 
 
 ## Built With
