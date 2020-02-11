@@ -1,11 +1,12 @@
 package parser
 
 import (
-	"WikiPal/internal/embed"
-	"WikiPal/pkg/wiki"
 	"fmt"
 	"math/rand"
 	"strings"
+
+	"github.com/larssont/WikiPal/internal/embed"
+	"github.com/larssont/WikiPal/pkg/wiki"
 )
 
 var input string

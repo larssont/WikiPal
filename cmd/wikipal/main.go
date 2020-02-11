@@ -1,8 +1,6 @@
 package main
 
 import (
-	"WikiPal/internal/embed"
-	"WikiPal/internal/parser"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -10,6 +8,9 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+
+	"github.com/larssont/WikiPal/internal/embed"
+	"github.com/larssont/WikiPal/internal/parser"
 
 	"github.com/bwmarrin/discordgo"
 )
