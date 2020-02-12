@@ -9,11 +9,21 @@ Follow the instructions here for your system: [golang.org/doc/install](https://g
 
 ### Installing/Running
 
-Download or clone this repo.
+#### Normal
 
-Edit bot.json in directory configs. Make sure to set your own bot token.
+```shell
+git clone https://github.com/larssont/WikiPal.git
 
-Run main.go in directory cmd/wikipal.
+cd WikiPal
+```
+
+Edit `WikiPal/configs/bot.json`. Make sure to set your own bot token.
+
+```shell
+go run cmd/wikipal/main.go
+```
+
+#### Docker
 
 
 ## Built With

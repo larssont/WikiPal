@@ -1,9 +1,8 @@
 package main
 
 import (
-	"encoding/json"
+	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/signal"
 	"strings"
@@ -15,40 +14,46 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-var discordBot Bot
+var conf BotConfig
 
-//Bot struct
-type Bot struct {
-	Name   string
-	Prefix string
-	Token  string
+//BotConfig struct
+type BotConfig struct {
+	name   string
+	prefix string
+	token  string
 }
 
-func getBotConf() {
+func getBotConfig() BotConfig {
 
-	path := "configs/bot.json"
+	var token, prefix, name string
 
-	jsonFile, err := os.Open(path)
+	flag.StringVar(&token, "token", "", "bot token")
+	flag.StringVar(&prefix, "prefix", "!w", "bot prefix")
+	flag.StringVar(&name, "name", "WikiPal", "bot name")
 
-	if err != nil {
-		fmt.Println(err)
-	}
+	flag.Parse()
 
-	defer jsonFile.Close()
+	c := BotConfig{
+		name:   name,
+		prefix: prefix,
+		token:  token}
 
-	byteValue, _ := ioutil.ReadAll(jsonFile)
-
-	json.Unmarshal(byteValue, &discordBot)
+	return c
 
 }
 
 func main() {
 
-	getBotConf()
+	conf = getBotConfig()
+	if len(conf.token) == 0 {
+		fmt.Println("No bot token supplied. Use flag -token=MYTOKEN.")
+		return
+	}
+
 	parser.GenerateCommands()
 
 	// Create a new Discord session using the provided bot token.
-	dg, err := discordgo.New("Bot " + discordBot.Token)
+	dg, err := discordgo.New("Bot " + conf.token)
 	if err != nil {
 		fmt.Println("error creating Discord session,", err)
 		return
@@ -91,15 +96,15 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	if len(content) <= len(discordBot.Prefix) {
+	if len(content) <= len(conf.prefix) {
 		return
 	}
 
-	if content[:len(discordBot.Prefix)] != discordBot.Prefix {
+	if content[:len(conf.prefix)] != conf.prefix {
 		return
 	}
 
-	content = content[len(discordBot.Prefix)+1:]
+	content = content[len(conf.prefix)+1:]
 
 	message := strings.SplitN(content, " ", 2)
 	query := message[0]
