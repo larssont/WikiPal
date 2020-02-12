@@ -1,14 +1,17 @@
 FROM golang:1.13.7-alpine3.11
 
-MAINTAINER Tommy larsson "larssont@tuta.io"
+ENV TOKEN=""
+ENV PREFIX="!w"
 
-RUN apt-get update -y
-RUN apt-get upgrade -y
-RUN apt-get install -y git
+RUN apk update
+RUN apk upgrade
+RUN apk add --no-cache git
+RUN apk add --no-cache openssh
 
-RUN git clone https://github.com/larssont/WikiPal
-    
-WORKDIR WikiPal
+WORKDIR /data
 
+RUN git clone https://github.com/larssont/WikiPal /data/app
 
-CMD go cmd/wikipalmain.go
+WORKDIR /data/app/cmd/wikipal
+
+CMD go run main.go -token=${TOKEN} -prefix=${PREFIX}
