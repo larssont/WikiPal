@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/larssont/WikiPal/internal/embed"
-	"github.com/larssont/WikiPal/pkg/wiki"
+	"github.com/larssont/WikiPal/internal/wiki"
 )
 
 var input string
