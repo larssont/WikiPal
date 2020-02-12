@@ -66,6 +66,10 @@ func main() {
 		return
 	}
 
+	// Update status
+	var status = fmt.Sprintf("%s help", conf.prefix)
+	dg.UpdateStatus(0, status)
+
 	// Wait here until CTRL-C or other term signal is received.
 	fmt.Println("Bot is now running.  Press CTRL-C to exit.")
 	sc := make(chan os.Signal, 1)
