@@ -18,23 +18,20 @@ var conf BotConfig
 
 //BotConfig struct
 type BotConfig struct {
-	name   string
 	prefix string
 	token  string
 }
 
 func getBotConfig() BotConfig {
 
-	var token, prefix, name string
+	var token, prefix string
 
 	flag.StringVar(&token, "token", "", "bot token")
 	flag.StringVar(&prefix, "prefix", "!w", "bot prefix")
-	flag.StringVar(&name, "name", "WikiPal", "bot name")
 
 	flag.Parse()
 
 	c := BotConfig{
-		name:   name,
 		prefix: prefix,
 		token:  token}
 
