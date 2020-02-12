@@ -25,6 +25,7 @@ go run cmd/wikipal/main.go
 
 #### Docker
 
+Get the `Dockerfile` from this repo and build the docker image. Note that it pulls the applicaton directly from this repo.
 
 ## Built With
 
