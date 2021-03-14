@@ -10,7 +10,7 @@ RUN apk add --no-cache openssh
 
 WORKDIR /data
 
-RUN git clone https://github.com/larssont/WikiPal /data/app
+RUN git clone https://github.com/larssont/wikipal /data/app
 
 WORKDIR /data/app/cmd/wikipal
 
