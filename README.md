@@ -12,12 +12,12 @@ Follow the instructions here for your system: [golang.org/doc/install](https://g
 #### Normal
 
 ```shell
-git clone https://github.com/larssont/WikiPal.git
+git clone https://github.com/larssont/wikipal.git
 
-cd WikiPal
+cd wikipal
 ```
 
-Edit `WikiPal/configs/bot.json`. Make sure to set your own bot token.
+Edit `wikipal/configs/bot.json`. Make sure to set your own bot token.
 
 ```shell
 go run cmd/wikipal/main.go
